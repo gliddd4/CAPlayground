@@ -90,6 +90,7 @@ export function EditorProvider({
   const [doc, setDoc] = useState<ProjectDocument | null>(null);
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<number | undefined>(undefined);
+  const docRef = useRef<ProjectDocument | null>(null);
   const saveTimerRef = useRef<number | null>(null);
   const lastSavePromiseRef = useRef<Promise<void> | null>(null);
   const pastRef = useRef<ProjectDocument[]>([]);
@@ -112,6 +113,10 @@ export function EditorProvider({
     pastRef.current.push(JSON.parse(JSON.stringify(prev)) as ProjectDocument);
     futureRef.current = [];
   }, []);
+
+  useEffect(() => {
+    docRef.current = doc;
+  }, [doc]);
 
   useEffect(() => {
     if (doc !== null) return;
@@ -326,7 +331,7 @@ export function EditorProvider({
   }, [doc, projectId, initialMeta.id, initialMeta.name, initialMeta.width, initialMeta.height, initialMeta.background]);
 
   const doSave = useCallback((snapshot?: ProjectDocument): Promise<void> => {
-    const snap = snapshot ?? doc;
+    const snap = snapshot ?? docRef.current;
     if (!snap) return Promise.resolve();
     setSavingStatus('saving');
     const p = writeToIndexedDB(snap)
@@ -338,7 +343,7 @@ export function EditorProvider({
       });
     lastSavePromiseRef.current = p;
     return p;
-  }, [doc]);
+  }, [writeToIndexedDB]);
 
   const flushPersist = useCallback(async () => {
     if (saveTimerRef.current) {
@@ -349,7 +354,7 @@ export function EditorProvider({
   }, [doSave]);
 
   const persist = useCallback(() => {
-    if (!doc) return;
+    if (!docRef.current) return;
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
@@ -359,7 +364,7 @@ export function EditorProvider({
       saveTimerRef.current = null;
       doSave();
     }, 500);
-  }, [doc, doSave]);
+  }, [doSave]);
 
   useEffect(() => {
     if (!doc) return;
