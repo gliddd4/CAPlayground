@@ -11,6 +11,7 @@ import {
   updateInTree,
   removeFromTree,
   insertBeforeInTree,
+  insertAfterInTree,
   deleteInTree,
   containsId,
   insertIntoGroupInTree,
@@ -1181,7 +1182,9 @@ export function EditorProvider({
         if (newId) assets[newId] = { filename: asset.filename, dataURL: asset.dataURL };
       }
       pushHistory(prev);
-      const next = { ...cur, layers: [...cur.layers, cloned], selectedId: (cloned as any).id, assets };
+      const ins = insertAfterInTree(cur.layers, targetId, cloned);
+      const nextLayers = ins.inserted ? ins.layers : [...cur.layers, cloned];
+      const next = { ...cur, layers: nextLayers, selectedId: (cloned as any).id, assets };
       return { ...prev, docs: { ...prev.docs, [key]: next } } as ProjectDocument;
     });
   }, [pushHistory]);

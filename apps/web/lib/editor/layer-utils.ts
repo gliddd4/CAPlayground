@@ -122,6 +122,31 @@ export function insertBeforeInTree(layers: AnyLayer[], targetId: string, node: A
   return { inserted, layers: next };
 }
 
+export function insertAfterInTree(layers: AnyLayer[], targetId: string, node: AnyLayer): { inserted: boolean; layers: AnyLayer[] } {
+  let inserted = false;
+  const next: AnyLayer[] = [];
+  for (let i = 0; i < layers.length; i++) {
+    const l = layers[i];
+    if (!inserted && l.id === targetId) {
+      next.push(l);
+      next.push(node);
+      inserted = true;
+    } else if (l.type === 'group') {
+      const g = l as GroupLayer;
+      const res = insertAfterInTree(g.children, targetId, node);
+      if (res.inserted) {
+        inserted = true;
+        next.push({ ...g, children: res.layers } as AnyLayer);
+      } else {
+        next.push(l);
+      }
+    } else {
+      next.push(l);
+    }
+  }
+  return { inserted, layers: next };
+}
+
 export function deleteInTree(layers: AnyLayer[], id: string): AnyLayer[] {
   const next: AnyLayer[] = [];
   for (const l of layers) {
